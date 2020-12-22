@@ -97,15 +97,24 @@ int main(int argc, const char *argv[])
         //// EOF STUDENT ASSIGNMENT
 
         //// STUDENT ASSIGNMENT
-        //// TASK MP.3 -> only keep keypoints on the preceding vehicle
+        //// DONE: TASK MP.3 -> only keep keypoints on the preceding vehicle
 
         // only keep keypoints on the preceding vehicle
         bool bFocusOnVehicle = true;
         cv::Rect vehicleRect(535, 180, 180, 150);
+        std::vector<cv::KeyPoint> tempKeypoints;
         if (bFocusOnVehicle)
         {
-            // ...
+            for (auto it = keypoints.begin(); it < keypoints.end(); it++)
+            {
+                if ((it->pt.x < (vehicleRect.x + vehicleRect.width)) && (it->pt.x > (vehicleRect.x)))
+                {
+                    if((it->pt.y < (vehicleRect.y + vehicleRect.height)) && (it->pt.y > (vehicleRect.y)))
+                    tempKeypoints.push_back(*it);
+                }
+            }
         }
+        keypoints = tempKeypoints;
 
         //// EOF STUDENT ASSIGNMENT
 
