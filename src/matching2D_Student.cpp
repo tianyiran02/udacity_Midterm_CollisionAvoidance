@@ -13,12 +13,21 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
 
     if (matcherType.compare("MAT_BF") == 0)
     {
-        int normType = cv::NORM_HAMMING;
+        int normType = descriptorType.compare("DES_BINARY") == 0 ? cv::NORM_HAMMING : cv::NORM_L2;
         matcher = cv::BFMatcher::create(normType, crossCheck);
     }
     else if (matcherType.compare("MAT_FLANN") == 0)
     {
-        // ...
+        if (descSource.type() != CV_32F)
+        { // OpenCV bug workaround : convert binary descriptors to floating point due to a bug in current OpenCV implementation
+            descSource.convertTo(descSource, CV_32F);
+        }
+        if (descRef.type() != CV_32F)
+        {
+            descRef.convertTo(descRef, CV_32F);
+        }
+
+        matcher = cv::FlannBasedMatcher::create();
     }
 
     // perform matching task
@@ -29,9 +38,23 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
     }
     else if (selectorType.compare("SEL_KNN") == 0)
     { // k nearest neighbors (k=2)
+        vector<vector<cv::DMatch>> matchResult;
+        matcher->knnMatch(descSource, descRef, matchResult, 2); // finds the 2 best matches
 
-        // ...
+        // TODO : filter matches using descriptor distance ratio test
+        for (int i = 0; i < matchResult.size(); i++)
+        {
+            float dis0 = matchResult.at(i).at(0).distance;
+            float dis1 = matchResult.at(i).at(1).distance;
+
+            if (dis0 < 0.8f * dis1)
+            {
+                matches.push_back(matchResult.at(i).at(0));
+            }
+        }
     }
+
+    cout << "Matches found: " << matches.size() << endl;
 }
 
 // Use one of several types of state-of-art descriptors to uniquely identify keypoints
